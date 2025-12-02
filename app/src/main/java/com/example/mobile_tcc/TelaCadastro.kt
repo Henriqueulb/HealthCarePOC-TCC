@@ -15,12 +15,10 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TelaCadastro(onCadastroSucesso: () -> Unit, onVoltar: () -> Unit) {
+    var nome by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
-
-    // Variável para controlar o telefone (apenas números)
     var telefone by remember { mutableStateOf("") }
-    var nome by remember { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -44,11 +42,10 @@ fun TelaCadastro(onCadastroSucesso: () -> Unit, onVoltar: () -> Unit) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        // --- CAMPO DE E-MAIL (COM FILTRO DE ESPAÇOS) ---
+        // CAMPO DE E-MAIL-
         OutlinedTextField(
             value = email,
             onValueChange = { novoTexto ->
-                // REGRA: Impede que o usuário digite espaços
                 email = novoTexto.filter { !it.isWhitespace() }
             },
             label = { Text("E-mail") },
@@ -57,7 +54,6 @@ fun TelaCadastro(onCadastroSucesso: () -> Unit, onVoltar: () -> Unit) {
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-        // -----------------------------------------------
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -72,20 +68,18 @@ fun TelaCadastro(onCadastroSucesso: () -> Unit, onVoltar: () -> Unit) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // --- CAMPO DE TELEFONE (COM MÁSCARA VISUAL) ---
+        // CAMPO DE TELEFONE
         OutlinedTextField(
             value = telefone,
             onValueChange = { novoTexto ->
-                // 1. Filtra para pegar só números
                 val apenasNumeros = novoTexto.filter { it.isDigit() }
-                // 2. Trava em 11 dígitos (DDD + 9 números)
                 if (apenasNumeros.length <= 11) {
                     telefone = apenasNumeros
                 }
             },
             label = { Text("Telefone Celular") },
             placeholder = { Text("(99) 99999-9999") },
-            // Aplica a formatação visual (parênteses e hífen) sem sujar a variável
+            // Aplica a formatacao
             visualTransformation = MascaraTelefone(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
@@ -97,7 +91,7 @@ fun TelaCadastro(onCadastroSucesso: () -> Unit, onVoltar: () -> Unit) {
 
         Button(
             onClick = {
-                // Validações antes de enviar
+                // Validacoes antes de enviar
                 if (nome.trim().length < 5 || !nome.trim().contains(" ")) {
                     Toast.makeText(context, "Informe o nome completo", Toast.LENGTH_SHORT).show()
                 } else if (telefone.length < 11) {
@@ -109,8 +103,7 @@ fun TelaCadastro(onCadastroSucesso: () -> Unit, onVoltar: () -> Unit) {
                 } else {
                     scope.launch {
                         try {
-                            // Envia nome sanitizado junto com os outros campos
-                            val req = CadastroRequest(email.trim(), senha, telefone, nome.trim())
+                            val req = CadastroRequest(nome.trim(), email.trim(), senha, telefone)
                             val res = RetrofitClient.api.cadastro(req)
 
                             if (res.isSuccessful && res.body()?.sucesso == true) {

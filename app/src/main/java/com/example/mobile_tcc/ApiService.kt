@@ -1,4 +1,4 @@
-package com.example.mobile_tcc // CONFIRA SE O PACOTE ESTÁ CORRETO COM O SEU PROJETO
+package com.example.mobile_tcc
 
 import com.google.gson.annotations.SerializedName
 import retrofit2.Response
@@ -7,10 +7,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
-// --- 1. MODELOS DE DADOS (DTOs) ---
-// Usamos @SerializedName para garantir que o JSON tenha as chaves exatas que o Backend espera,
-// independente de como o código for minificado ou alterado no futuro.
+// DTOs
 
 data class LoginRequest(
     @SerializedName("email") val email: String,
@@ -18,33 +17,42 @@ data class LoginRequest(
 )
 
 data class CadastroRequest(
+    @SerializedName("nome") val nome: String,
     @SerializedName("email") val email: String,
     @SerializedName("senha") val senha: String,
-    @SerializedName("telefone") val telefone: String,
-    @SerializedName("nome") val nome: String,         // Novo campo: Nome
+    @SerializedName("telefone") val telefone: String
 )
 
 data class RespostaApi(
     @SerializedName("mensagem") val mensagem: String,
     @SerializedName("sucesso") val sucesso: Boolean,
-    @SerializedName("nomeUsuario") val nomeUsuario: String? = null // Recebe o nome vindo do Login
+    @SerializedName("nomeUsuario") val nomeUsuario: String? = null
 )
 
-// DTOs para a Tela Home (Usados na rota GET /home)
+// DTOs PARA ROTINA
+
+data class NovaRotinaRequest(
+    @SerializedName("emailUsuario") val emailUsuario: String,
+    @SerializedName("titulo") val titulo: String,
+    @SerializedName("horario") val horario: String,
+    @SerializedName("dose") val dose: String?,
+    @SerializedName("descricao") val descricao: String?
+)
+
 data class Tarefa(
-    val id: Int,
-    val titulo: String,
-    val horario: String,
-    val feita: Boolean
+    @SerializedName("id") val id: Int,
+    @SerializedName("titulo") val titulo: String,
+    @SerializedName("horario") val horario: String,
+    @SerializedName("dose") val dose: String?,
+    @SerializedName("feita") val feita: Boolean
 )
 
 data class ResumoHome(
-    val progresso: Float,
-    val tarefas: List<Tarefa>
+    @SerializedName("progresso") val progresso: Float,
+    @SerializedName("tarefas") val tarefas: List<Tarefa>
 )
 
-// --- 2. INTERFACE DA API (ROTAS) ---
-// Define os endpoints que o aplicativo pode chamar
+// INTERFACE
 
 interface ApiService {
     @POST("login")
@@ -53,13 +61,17 @@ interface ApiService {
     @POST("cadastro")
     suspend fun cadastro(@Body request: CadastroRequest): Response<RespostaApi>
 
+    // Rota para criar nova rotina
+    @POST("rotina")
+    suspend fun criarRotina(@Body request: NovaRotinaRequest): Response<RespostaApi>
+
+    // Rota para buscar os dados da Home (lista de tarefas)
     @GET("home")
-    suspend fun getHome(): Response<ResumoHome>
+    suspend fun getHome(@Query("email") email: String): Response<ResumoHome>
 }
 
-// --- 3. CONEXÃO RETROFIT (CLIENTE) ---
-
 object RetrofitClient {
+    // Endereço do PC visto pelo emulador Android
     private const val BASE_URL = "http://10.0.2.2:8080/"
 
     val api: ApiService by lazy {
