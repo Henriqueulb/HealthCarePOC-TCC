@@ -20,38 +20,39 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-// Cores do Projeto (Design Azul)
+// Cores do Projeto
 val AzulPrincipal = Color(0xFF2962FF)
 val FundoCinzaClaro = Color(0xFFF5F5F5)
 
-// --- TELA PRINCIPAL ---
+// TELA PRINCIPAL
 @Composable
-fun TelaHome(nomeUsuario: String, onLogout: () -> Unit, onNavegarRotina: () -> Unit) { // <--- NOVO PARÂMETRO
-    // Estado para guardar os dados (Simulação de API)
+fun TelaHome(nomeUsuario: String, emailUsuario: String, onLogout: () -> Unit, onNavegarRotina: () -> Unit) {
+
     var resumo by remember { mutableStateOf<ResumoHome?>(null) }
     var carregando by remember { mutableStateOf(true) }
+    var erro by remember { mutableStateOf<String?>(null) }
 
-    // Simula carregamento de dados ao abrir a tela
+    // Busca dados
     LaunchedEffect(Unit) {
-        delay(1000) // Tempo fake de espera (1 segundo)
-        resumo = ResumoHome(
-            progresso = 0.65f, // 65% de Aderência
-            tarefas = listOf(
-                Tarefa(1, "Tomar Losartana", "08:00", true),
-                Tarefa(2, "Medir Glicose", "10:00", true),
-                Tarefa(3, "Almoço Saudável", "12:00", false),
-                Tarefa(4, "Caminhada Leve", "17:00", false)
-            )
-        )
-        carregando = false
+        try {
+            val res = RetrofitClient.api.getHome(emailUsuario)
+            if (res.isSuccessful && res.body() != null) {
+                resumo = res.body()
+            } else {
+                erro = "Não foi possível carregar sua rotina."
+            }
+        } catch (e: Exception) {
+            erro = "Erro de conexão: ${e.message}"
+        } finally {
+            carregando = false
+        }
     }
 
     Scaffold(
         containerColor = Color.White,
         bottomBar = {
-            // Barra de Navegação Flutuante
             BarraNavegacaoInferior(onClicarRotina = onNavegarRotina)
         }
     ) { padding ->
@@ -63,7 +64,7 @@ fun TelaHome(nomeUsuario: String, onLogout: () -> Unit, onNavegarRotina: () -> U
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- CABEÇALHO (Mostra o nome dinâmico) ---
+            // Cabecalho com Nome
             CabecalhoUsuario(nome = nomeUsuario)
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -72,8 +73,11 @@ fun TelaHome(nomeUsuario: String, onLogout: () -> Unit, onNavegarRotina: () -> U
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = AzulPrincipal)
                 }
+            } else if (erro != null) {
+                // Mensagem de erro
+                Text(text = erro!!, color = Color.Red, modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                // Conteúdo da tela (Gráficos e Listas)
+                // Conteúdo Principal
                 resumo?.let { dados ->
                     ConteudoPrincipal(dados)
                 }
@@ -82,8 +86,7 @@ fun TelaHome(nomeUsuario: String, onLogout: () -> Unit, onNavegarRotina: () -> U
     }
 }
 
-// --- COMPONENTES VISUAIS ---
-
+// CABEÇALHO
 @Composable
 fun CabecalhoUsuario(nome: String) {
     Row(
@@ -91,9 +94,7 @@ fun CabecalhoUsuario(nome: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Foto e Saudação
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Placeholder para foto
             Surface(
                 modifier = Modifier.size(48.dp),
                 shape = CircleShape,
@@ -113,14 +114,13 @@ fun CabecalhoUsuario(nome: String) {
                     color = Color.Gray
                 )
                 Text(
-                    text = nome, // Nome exibido aqui
+                    text = nome,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
 
-        // Botões de Ação (Sino e Config)
         Row {
             BotaoIcone(Icons.Default.Notifications)
             Spacer(modifier = Modifier.width(8.dp))
@@ -141,14 +141,15 @@ fun BotaoIcone(icone: ImageVector) {
     }
 }
 
+// BARRA INFERIOR
 @Composable
-fun BarraNavegacaoInferior(onClicarRotina: () -> Unit) { // Recebe a função de clique
+fun BarraNavegacaoInferior(onClicarRotina: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
             .height(64.dp),
-        shape = RoundedCornerShape(50), // Borda redonda estilo "cápsula"
+        shape = RoundedCornerShape(50),
         color = AzulPrincipal,
         shadowElevation = 8.dp
     ) {
@@ -160,7 +161,7 @@ fun BarraNavegacaoInferior(onClicarRotina: () -> Unit) { // Recebe a função de
             IconeNavegacao(Icons.Default.Home, true, onClick = {})
             IconeNavegacao(Icons.Default.Email, false, onClick = {})
             IconeNavegacao(Icons.Default.Person, false, onClick = {})
-            // O ícone de calendário chama a navegação!
+            // icone de Calendario leva para a Tela Rotina
             IconeNavegacao(Icons.Default.DateRange, false, onClick = onClicarRotina)
         }
     }
@@ -178,10 +179,11 @@ fun IconeNavegacao(icone: ImageVector, selecionado: Boolean, onClick: () -> Unit
     }
 }
 
+// CONTEÚDO PRINCIPAL
 @Composable
 fun ConteudoPrincipal(dados: ResumoHome) {
     LazyColumn {
-        // Card de Progresso
+        // Progresso
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -212,10 +214,9 @@ fun ConteudoPrincipal(dados: ResumoHome) {
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Botões de Atalho
+        // Atalhos
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                // Atalhos com ícones padrão (Favorite = Coração, List = Lista)
                 CardAtalho("Ficha Médica", Icons.Default.Favorite, Color(0xFFFFEBEE), Color(0xFFD32F2F))
                 CardAtalho("Relatórios", Icons.Default.List, Color(0xFFE8F5E9), Color(0xFF388E3C))
             }
@@ -228,11 +229,18 @@ fun ConteudoPrincipal(dados: ResumoHome) {
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        items(dados.tarefas) { tarefa ->
-            ItemTarefaHome(tarefa)
+        if (dados.tarefas.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
+                    Text("Nenhuma tarefa para hoje. Adicione na aba Rotina!", color = Color.Gray)
+                }
+            }
+        } else {
+            items(dados.tarefas) { tarefa ->
+                ItemTarefaHome(tarefa)
+            }
         }
 
-        // Espaço extra para a barra de navegação não cobrir o último item
         item {
             Spacer(modifier = Modifier.height(100.dp))
         }
@@ -253,6 +261,7 @@ fun ItemTarefaHome(tarefa: Tarefa) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Checkbox visual
             Box(
                 modifier = Modifier
                     .size(24.dp)
@@ -274,8 +283,15 @@ fun ItemTarefaHome(tarefa: Tarefa) {
                     fontWeight = FontWeight.SemiBold,
                     color = if (tarefa.feita) Color.Gray else Color.Black
                 )
+                // Exibe Horario e Dose
+                val detalhes = if (tarefa.dose.isNullOrBlank()) {
+                    tarefa.horario
+                } else {
+                    "${tarefa.horario} • ${tarefa.dose}"
+                }
+
                 Text(
-                    text = tarefa.horario,
+                    text = detalhes,
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )

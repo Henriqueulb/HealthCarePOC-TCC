@@ -5,14 +5,11 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 
-// Classe reutilizável para Máscara de Telefone (XX) XXXXX-XXXX
 class MascaraTelefone : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
-        // 1. Limpa tudo que não for número
-        val trimmed = text.text.take(11) // Limita a 11 dígitos
+        val trimmed = text.text.take(11)
         var out = ""
 
-        // 2. Aplica a formatação caractere por caractere
         for (i in trimmed.indices) {
             out += when (i) {
                 0 -> "("
@@ -23,7 +20,6 @@ class MascaraTelefone : VisualTransformation {
             out += trimmed[i]
         }
 
-        // 3. Mapeamento de cursor (para o cursor não pular errado ao apagar)
         val numberOffsetTranslator = object : OffsetMapping {
             override fun originalToTransformed(offset: Int): Int {
                 if (offset <= 0) return offset

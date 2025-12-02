@@ -20,31 +20,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-// --- MODELO DE DADOS LOCAL PARA A TELA ---
-data class ItemRotina(
-    val id: Int,
-    val horario: String,
-    val titulo: String,
-    val descricao: String,
-    var realizado: Boolean
-)
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TelaRotina(onVoltar: () -> Unit) {
-    // Dados de exemplo (Mock)
-    // Futuramente isso virá do Backend (ApiService.getRotina)
-    val listaRotina = remember {
-        mutableStateListOf(
-            ItemRotina(1, "08:00", "Losartana", "50mg - 1 Comprimido", true),
-            ItemRotina(2, "08:30", "Café da Manhã", "Evitar açúcar", true),
-            ItemRotina(3, "10:00", "Medir Glicose", "Anotar o valor", false),
-            ItemRotina(4, "12:00", "Almoço", "Prato equilibrado", false),
-            ItemRotina(5, "14:00", "Dipirona", "Se houver dor de cabeça", false),
-            ItemRotina(6, "17:00", "Caminhada", "30 minutos leve", false),
-            ItemRotina(7, "20:00", "Insulina", "Aplicar conforme tabela", false)
-        )
+fun TelaRotina(emailUsuario: String, onVoltar: () -> Unit, onAdicionarNovo: () -> Unit) {
+    var listaRotina by remember { mutableStateOf<List<Tarefa>>(emptyList()) }
+    var carregando by remember { mutableStateOf(true) }
+    var erro by remember { mutableStateOf<String?>(null) }
+
+    // Carregar dados
+    LaunchedEffect(Unit) {
+        try {
+            val res = RetrofitClient.api.getHome(emailUsuario)
+            if (res.isSuccessful && res.body() != null) {
+                listaRotina = res.body()!!.tarefas
+            } else {
+                erro = "Erro ao carregar rotina"
+            }
+        } catch (e: Exception) {
+            erro = "Sem conexão: ${e.message}"
+        } finally {
+            carregando = false
+        }
     }
 
     Scaffold(
@@ -61,7 +59,7 @@ fun TelaRotina(onVoltar: () -> Unit) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Ação para adicionar novo cuidado (Futuro) */ },
+                onClick = onAdicionarNovo,
                 containerColor = AzulPrincipal,
                 contentColor = Color.White,
                 shape = CircleShape
@@ -79,7 +77,7 @@ fun TelaRotina(onVoltar: () -> Unit) {
         ) {
             // Barra de progresso do dia
             val total = listaRotina.size
-            val feitos = listaRotina.count { it.realizado }
+            val feitos = listaRotina.count { it.feita }
             val progresso = if (total > 0) feitos.toFloat() / total else 0f
 
             CardProgressoRotina(feitos, total, progresso)
@@ -89,18 +87,32 @@ fun TelaRotina(onVoltar: () -> Unit) {
             Text("Cronograma", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
 
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 80.dp) // Espaço para o FAB não cobrir o último item
-            ) {
-                items(listaRotina) { item ->
-                    CardItemRotina(
-                        item = item,
-                        onCheckChange = { novoStatus ->
-                            // Atualiza a lista para refletir a mudança na UI
-                            val index = listaRotina.indexOf(item)
-                            listaRotina[index] = item.copy(realizado = novoStatus)
-                        }
-                    )
+            if (carregando) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = AzulPrincipal)
+                }
+            } else if (erro != null) {
+                Text("Erro: $erro", color = Color.Red)
+            } else if (listaRotina.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize().padding(bottom = 100.dp), contentAlignment = Alignment.Center) {
+                    Text("Nenhuma tarefa para hoje! Adicione (+)", color = Color.Gray)
+                }
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    items(listaRotina) { item ->
+                        CardItemRotina(
+                            item = item,
+                            onCheckChange = {
+                                // TODO: Implementar lógica de marcar como feito no banco
+                                // Por enquanto só atualiza visualmente localmente
+                                listaRotina = listaRotina.map {
+                                    if (it.id == item.id) it.copy(feita = !it.feita) else it
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -126,7 +138,6 @@ fun CardProgressoRotina(feitos: Int, total: Int, progresso: Float) {
                 Text("$feitos de $total tarefas concluídas", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
 
-            // Círculo de progresso ou Texto
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
                     progress = { progresso },
@@ -146,14 +157,14 @@ fun CardProgressoRotina(feitos: Int, total: Int, progresso: Float) {
 }
 
 @Composable
-fun CardItemRotina(item: ItemRotina, onCheckChange: (Boolean) -> Unit) {
+fun CardItemRotina(item: Tarefa, onCheckChange: (Boolean) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (item.realizado) Color(0xFFF0F9EB) else FundoCinzaClaro // Verde claro se feito
+            containerColor = if (item.feita) Color(0xFFF0F9EB) else FundoCinzaClaro
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -161,7 +172,6 @@ fun CardItemRotina(item: ItemRotina, onCheckChange: (Boolean) -> Unit) {
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Coluna do Horário
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.width(50.dp)
@@ -171,38 +181,38 @@ fun CardItemRotina(item: ItemRotina, onCheckChange: (Boolean) -> Unit) {
                 Text(item.horario, fontWeight = FontWeight.Bold, color = AzulPrincipal)
             }
 
-            // Divisória vertical
             Spacer(modifier = Modifier.width(8.dp))
             Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color.LightGray))
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Conteúdo
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.titulo,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (item.realizado) Color.Gray else Color.Black,
+                    color = if (item.feita) Color.Gray else Color.Black,
                     style = MaterialTheme.typography.bodyLarge
                 )
-                Text(
-                    text = item.descricao,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
+                // Exibe a Dose
+                if (!item.dose.isNullOrBlank()) {
+                    Text(
+                        text = "Dose: ${item.dose}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.DarkGray
+                    )
+                }
             }
 
-            // Checkbox
             IconButton(
-                onClick = { onCheckChange(!item.realizado) },
+                onClick = { onCheckChange(!item.feita) },
                 modifier = Modifier
                     .background(
-                        if (item.realizado) AzulPrincipal else Color.White,
+                        if (item.feita) AzulPrincipal else Color.White,
                         CircleShape
                     )
                     .size(32.dp)
                     .padding(4.dp)
             ) {
-                if (item.realizado) {
+                if (item.feita) {
                     Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
                 }
             }

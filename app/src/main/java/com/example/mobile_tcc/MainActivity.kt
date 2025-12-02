@@ -20,6 +20,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            // tema
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
@@ -30,22 +31,23 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// --- CONTROLE DE NAVEGAÇÃO ---
+// CONTROLE DE NAVEGACAO
 @Composable
 fun NavegacaoPrincipal() {
-    // Estados: "login", "cadastro", "home", "rotina"
+    // Estados
     var telaAtual by remember { mutableStateOf("login") }
 
-    // Estado para guardar o nome do usuário logado
+    // Dados do Usuário Logado
     var nomeUsuarioLogado by remember { mutableStateOf("Usuário") }
+    var emailUsuarioLogado by remember { mutableStateOf("") }
 
     when (telaAtual) {
         "login" -> TelaLogin(
             onNavegarCadastro = { telaAtual = "cadastro" },
-            onLoginSucesso = { nome ->
-                // 1. Recebe o nome vindo do Login
+            onLoginSucesso = { nome, email ->
+                // Salva os dados do usuário logado
                 nomeUsuarioLogado = nome
-                // 2. Muda para a Home
+                emailUsuarioLogado = email
                 telaAtual = "home"
             }
         )
@@ -54,19 +56,32 @@ fun NavegacaoPrincipal() {
             onVoltar = { telaAtual = "login" }
         )
         "home" -> TelaHome(
-            nomeUsuario = nomeUsuarioLogado, // Passa o nome para a Home
-            onLogout = { telaAtual = "login" },
-            onNavegarRotina = { telaAtual = "rotina" } // <--- VAI PARA A ROTINA
+            nomeUsuario = nomeUsuarioLogado,
+             emailUsuario = emailUsuarioLogado,
+            onLogout = {
+                // Limpa dados ao sair
+                nomeUsuarioLogado = "Usuário"
+                emailUsuarioLogado = ""
+                telaAtual = "login"
+            },
+            onNavegarRotina = { telaAtual = "rotina" } // Vai para a lista de rotina
         )
         "rotina" -> TelaRotina(
-            onVoltar = { telaAtual = "home" } // <--- VOLTA PARA A HOME
+            emailUsuario = emailUsuarioLogado, // Passa o email para buscar a lista certa
+            onVoltar = { telaAtual = "home" },
+            onAdicionarNovo = { telaAtual = "nova_rotina" } // Vai para o formulario de adicionar
+        )
+        "nova_rotina" -> TelaAdicionarRotina(
+            emailUsuario = emailUsuarioLogado, // Passa o email logado para salvar no banco certo
+            onVoltar = { telaAtual = "rotina" },
+            onSalvarSucesso = { telaAtual = "rotina" } // Volta para a lista ao salvar
         )
     }
 }
 
 // --- TELA DE LOGIN ---
 @Composable
-fun TelaLogin(onNavegarCadastro: () -> Unit, onLoginSucesso: (String) -> Unit) {
+fun TelaLogin(onNavegarCadastro: () -> Unit, onLoginSucesso: (String, String) -> Unit) { // Recebe (Email, senha)
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
 
@@ -85,7 +100,6 @@ fun TelaLogin(onNavegarCadastro: () -> Unit, onLoginSucesso: (String) -> Unit) {
         OutlinedTextField(
             value = email,
             onValueChange = { novo ->
-                // Filtro para não aceitar espaços
                 email = novo.filter { !it.isWhitespace() }
             },
             label = { Text("E-mail") },
@@ -112,22 +126,21 @@ fun TelaLogin(onNavegarCadastro: () -> Unit, onLoginSucesso: (String) -> Unit) {
             onClick = {
                 scope.launch {
                     try {
-                        // Limpa o email antes de enviar
                         val emailValidated = email.trim()
                         val res = RetrofitClient.api.login(LoginRequest(emailValidated, senha))
 
                         if (res.isSuccessful) {
                             val resposta = res.body()
                             if (resposta?.sucesso == true) {
-                                // Pega o nome da resposta da API (ou usa padrão se vier nulo)
                                 val nomeRecebido = resposta.nomeUsuario ?: "Paciente"
 
                                 Toast.makeText(context, "Olá, $nomeRecebido!", Toast.LENGTH_SHORT).show()
 
-                                // Chama a função de sucesso passando o nome
-                                onLoginSucesso(nomeRecebido)
+                                // Passa o nome E o email para a navegacao central
+                                onLoginSucesso(nomeRecebido, emailValidated)
                             }
                         } else {
+                            // ler a mensagem de erro do servidor
                             val erroJson = res.errorBody()?.string()
                             Toast.makeText(context, "E-mail ou senha incorretos", Toast.LENGTH_SHORT).show()
                             println("Erro detalhado: $erroJson")
