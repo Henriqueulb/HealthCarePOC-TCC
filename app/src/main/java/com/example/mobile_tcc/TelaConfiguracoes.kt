@@ -28,7 +28,6 @@ fun TelaConfiguracoes(navController: NavController, emailUsuario: String) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Estado do Dialog de Exclusão
     var mostrarDialogExclusao by remember { mutableStateOf(false) }
     var carregando by remember { mutableStateOf(false) }
 
@@ -55,7 +54,7 @@ fun TelaConfiguracoes(navController: NavController, emailUsuario: String) {
         }
     }
 
-    // --- UI PRINCIPAL ---
+    // UI PRINCIPAL
     Scaffold(
         topBar = {
             TopAppBar(
@@ -76,7 +75,7 @@ fun TelaConfiguracoes(navController: NavController, emailUsuario: String) {
                 .padding(16.dp)
         ) {
 
-            // Item: Trocar Senha
+            // Trocar Senha
             ItemConfiguracao(
                 icone = Icons.Default.Lock,
                 titulo = "Trocar Senha",
@@ -85,7 +84,7 @@ fun TelaConfiguracoes(navController: NavController, emailUsuario: String) {
 
             Divider()
 
-            // Item: Notificações (Placeholder)
+            // Notificações
             ItemConfiguracao(
                 icone = Icons.Default.Notifications,
                 titulo = "Notificações",
@@ -96,7 +95,7 @@ fun TelaConfiguracoes(navController: NavController, emailUsuario: String) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Item: Deletar Conta (Destaque em Vermelho)
+            // Deletar Conta
             Button(
                 onClick = { mostrarDialogExclusao = true },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFEBEE)),
@@ -110,7 +109,7 @@ fun TelaConfiguracoes(navController: NavController, emailUsuario: String) {
         }
     }
 
-    // --- DIALOG DE CONFIRMAÇÃO ---
+    //  DIALOG DE CONFIRMAÇÃO
     if (mostrarDialogExclusao) {
         AlertDialog(
             onDismissRequest = { mostrarDialogExclusao = false },

@@ -121,7 +121,7 @@ fun TelaEditarPerfil(navController: NavController, emailUsuario: String) {
 
                 OutlinedTextField(
                     value = telefone,
-                    onValueChange = { telefone = Mascaras.formatarTelefone(it) }, // Se tiver Mascaras
+                    onValueChange = { telefone = Mascaras.formatarTelefone(it) },
                     label = { Text("Telefone") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     modifier = Modifier.fillMaxWidth()
