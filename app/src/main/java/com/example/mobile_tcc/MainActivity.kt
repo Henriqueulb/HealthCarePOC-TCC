@@ -10,10 +10,26 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.mobile_tcc.ui.theme.Mobile_TCCTheme
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val canal = NotificationChannel(
+                "canal_medicamentos",
+                "Lembretes de Rotina",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notificações para horário de medicamentos"
+            }
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(canal)
+        }
+
         setContent {
             Mobile_TCCTheme {
                 AppNavigation()
@@ -24,10 +40,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppNavigation() {
-    // Cria o controlador de navegação
+    // Cria o controlador de navegacao
     val navController = rememberNavController()
 
-    // Define o mapa de navegação, começando pelo login
+    // Define o mapa de navegacao
     NavHost(navController = navController, startDestination = "login") {
 
         // TELA DE LOGIN
@@ -114,6 +130,14 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val email = backStackEntry.arguments?.getString("email") ?: ""
             TelaDadosMedicos(navController, email)
+        }
+
+        composable(
+            route = "notificacoes/{email}",
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            TelaNotificacoes(navController, email)
         }
     }
 }
