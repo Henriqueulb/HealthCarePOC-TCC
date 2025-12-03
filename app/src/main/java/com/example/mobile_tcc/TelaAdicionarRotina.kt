@@ -100,11 +100,10 @@ fun TelaAdicionarRotina(navController: NavController, emailUsuario: String) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // --- CAMPO HORÁRIO COM MÁSCARA ---
+            // CAMPO HORARIO
             OutlinedTextField(
                 value = horario,
                 onValueChange = { novoTexto ->
-                    // Aplica a máscara e limita caracteres
                     if (novoTexto.length <= 5) {
                         horario = Mascaras.formatarHora(novoTexto)
                     }
@@ -112,7 +111,7 @@ fun TelaAdicionarRotina(navController: NavController, emailUsuario: String) {
                 label = { Text("Horário (HH:mm)") },
                 placeholder = { Text("08:00") },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number) // Teclado numérico
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             OutlinedTextField(

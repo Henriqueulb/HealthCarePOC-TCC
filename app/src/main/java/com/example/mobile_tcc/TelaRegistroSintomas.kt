@@ -24,7 +24,7 @@ fun TelaRegistroSintomas(navController: NavController, emailUsuario: String) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Estados dos Sliders (Iniciam no meio: 5)
+    // Estados dos Sliders
     var bemEstar by remember { mutableStateOf(5f) }
     var sintomas by remember { mutableStateOf(5f) }
     var carregando by remember { mutableStateOf(false) }
@@ -83,7 +83,7 @@ fun TelaRegistroSintomas(navController: NavController, emailUsuario: String) {
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            // --- ESCALA BEM-ESTAR ---
+            // ESCALA BEM-ESTAR
             Text("Nível de Bem-Estar Geral", fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -101,7 +101,7 @@ fun TelaRegistroSintomas(navController: NavController, emailUsuario: String) {
                 value = bemEstar,
                 onValueChange = { bemEstar = it },
                 valueRange = 0f..10f,
-                steps = 9, // Passos discretos (0,1,2...10)
+                steps = 9,
                 colors = SliderDefaults.colors(
                     thumbColor = Color(0xFF0D47A1),
                     activeTrackColor = Color(0xFF0D47A1)
@@ -114,7 +114,7 @@ fun TelaRegistroSintomas(navController: NavController, emailUsuario: String) {
 
             Divider(modifier = Modifier.padding(vertical = 24.dp))
 
-            // --- ESCALA SINTOMAS ---
+            // ESCALA SINTOMAS
             Text("Intensidade dos Sintomas", fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {

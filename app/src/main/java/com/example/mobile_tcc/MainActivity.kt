@@ -24,23 +24,23 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppNavigation() {
-    // Cria o controlador de navegação (o "cérebro" das rotas)
+    // Cria o controlador de navegação
     val navController = rememberNavController()
 
     // Define o mapa de navegação, começando pelo login
     NavHost(navController = navController, startDestination = "login") {
 
-        // --- TELA DE LOGIN ---
+        // TELA DE LOGIN
         composable("login") {
             TelaLogin(navController)
         }
 
-        // --- TELA DE CADASTRO ---
+        // TELA DE CADASTRO
         composable("cadastro") {
             TelaCadastro(navController)
         }
 
-        // --- TELA HOME (Recebe o email do usuário logado) ---
+        //  TELA HOME
         composable(
             route = "home/{email}",
             arguments = listOf(navArgument("email") { type = NavType.StringType })
@@ -50,7 +50,7 @@ fun AppNavigation() {
             TelaHome(navController, email)
         }
 
-        // --- TELA DE ROTINA (Lista de Cuidados) ---
+        // TELA DE ROTINA
         composable(
             route = "rotina/{email}",
             arguments = listOf(navArgument("email") { type = NavType.StringType })
@@ -59,7 +59,7 @@ fun AppNavigation() {
             TelaRotina(navController, email)
         }
 
-        // --- TELA DE ADICIONAR ITEM NA ROTINA ---
+        // TELA DE ADICIONAR ITEM NA ROTINA
         composable(
             route = "adicionar_rotina/{email}",
             arguments = listOf(navArgument("email") { type = NavType.StringType })
@@ -106,6 +106,14 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val email = backStackEntry.arguments?.getString("email") ?: ""
             TelaTrocarSenha(navController, email)
+        }
+
+        composable(
+            route = "dados_medicos/{email}",
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            TelaDadosMedicos(navController, email)
         }
     }
 }

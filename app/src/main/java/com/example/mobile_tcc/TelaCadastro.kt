@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TelaCadastro(navController: NavController) {
     val context = LocalContext.current
@@ -38,7 +37,6 @@ fun TelaCadastro(navController: NavController) {
         scope.launch {
             carregando = true
             try {
-                // CORREÇÃO AQUI: Usando o nome correto 'CadastroRequest'
                 val request = CadastroRequest(nome, email, senha, telefone)
                 val response = RetrofitClient.api.cadastro(request)
 
@@ -88,7 +86,7 @@ fun TelaCadastro(navController: NavController) {
 
         OutlinedTextField(
             value = telefone,
-            onValueChange = { telefone = it }, // Se tiver Mascaras.formatarTelefone(it) use aqui
+            onValueChange = { telefone = it },
             label = { Text("Telefone (Opcional)") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             modifier = Modifier.fillMaxWidth()

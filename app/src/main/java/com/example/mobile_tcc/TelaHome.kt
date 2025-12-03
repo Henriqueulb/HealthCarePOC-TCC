@@ -81,12 +81,11 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
                     onClick = { navController.navigate("sintomas/$emailUsuario") },
                     colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
                 )
-                // --- CORREÇÃO AQUI: DIRECIONAR PARA A TELA DE PERFIL ---
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
                     label = { Text("Perfil") },
                     selected = false,
-                    onClick = { navController.navigate("perfil/$emailUsuario") }, // Agora vai para a tela correta
+                    onClick = { navController.navigate("perfil/$emailUsuario") },
                     colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
                 )
             }
@@ -97,7 +96,7 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
             contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Cabeçalho
+            // Cabecalho
             item {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

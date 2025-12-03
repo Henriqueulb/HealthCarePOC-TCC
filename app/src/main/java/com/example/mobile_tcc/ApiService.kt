@@ -71,12 +71,18 @@ data class AtualizarPerfilDTO(
     @SerializedName("emailBusca") val emailBusca: String,
     @SerializedName("novoNome") val novoNome: String,
     @SerializedName("novoTelefone") val novoTelefone: String
-    // Senha removida
 )
 
 data class TrocarSenhaDTO(
     @SerializedName("email") val email: String,
     @SerializedName("novaSenha") val novaSenha: String
+)
+
+data class FichaMedicaDTO(
+    @SerializedName("emailUsuario") val emailUsuario: String,
+    @SerializedName("alergias") val alergias: String,
+    @SerializedName("medicacoes") val medicacoes: String,
+    @SerializedName("comorbidades") val comorbidades: String
 )
 
 // Interface
@@ -113,6 +119,12 @@ interface ApiService {
 
     @DELETE("usuario")
     suspend fun deletarConta(@Query("email") email: String): Response<RespostaApi>
+
+    @GET("ficha")
+    suspend fun getFichaMedica(@Query("email") email: String): Response<FichaMedicaDTO>
+
+    @POST("ficha")
+    suspend fun salvarFichaMedica(@Body dados: FichaMedicaDTO): Response<RespostaApi>
 }
 
 object RetrofitClient {

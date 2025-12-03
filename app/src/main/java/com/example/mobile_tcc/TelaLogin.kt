@@ -34,12 +34,11 @@ fun TelaLogin(navController: NavController) {
         scope.launch {
             carregando = true
             try {
-                // CORREÇÃO AQUI: Usando o nome correto 'LoginRequest'
                 val request = LoginRequest(email, senha)
                 val response = RetrofitClient.api.login(request)
 
                 if (response.isSuccessful) {
-                    val emailLimpo = email.trim() // Garante que o email vá limpo para a rota
+                    val emailLimpo = email.trim()
                     navController.navigate("home/$emailLimpo") {
                         popUpTo("login") { inclusive = true }
                     }

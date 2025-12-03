@@ -25,12 +25,10 @@ import androidx.navigation.NavController
 fun TelaPerfil(navController: NavController, emailUsuario: String) {
     val context = LocalContext.current
 
-    // Função de Logout
+    // Funcao de Logout
     fun realizarLogout() {
-        // Aqui você limparia tokens/sessões se estivesse usando DataStore
         Toast.makeText(context, "Saindo...", Toast.LENGTH_SHORT).show()
 
-        // Navega para Login limpando toda a pilha (não permite voltar)
         navController.navigate("login") {
             popUpTo(0) { inclusive = true }
         }
@@ -38,7 +36,7 @@ fun TelaPerfil(navController: NavController, emailUsuario: String) {
 
     Scaffold(
         bottomBar = {
-            // Barra de Navegação
+            // Barra de Navegacao
             NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Home, "Home") },
@@ -77,7 +75,6 @@ fun TelaPerfil(navController: NavController, emailUsuario: String) {
                 .padding(paddingValues)
                 .background(Color(0xFFF5F5F5)) // Fundo cinza claro
         ) {
-            // --- 1. CABEÇALHO AZUL ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -107,10 +104,10 @@ fun TelaPerfil(navController: NavController, emailUsuario: String) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 2. LISTA DE OPÇÕES ---
+            // LISTA DE OPCOES
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
 
-                // Opção: Meus Dados (Leva para edição)
+                // Meus Dados
                 OpcaoPerfil(
                     icone = Icons.Default.Person,
                     titulo = "Meus Dados",
@@ -120,17 +117,27 @@ fun TelaPerfil(navController: NavController, emailUsuario: String) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Opção: Configurações (Placeholder)
+                // Configuracoes
                 OpcaoPerfil(
                     icone = Icons.Default.Settings,
                     titulo = "Configurações",
                     subtitulo = "Segurança, Notificações",
-                    onClick = { navController.navigate("configuracoes/$emailUsuario") } // <--- ROTA ATUALIZADA
+                    onClick = { navController.navigate("configuracoes/$emailUsuario") }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Opção: Ajuda (Placeholder)
+                // Dados medicos
+                OpcaoPerfil(
+                    icone = Icons.Default.MedicalServices,
+                    titulo = "Dados Médicos",
+                    subtitulo = "Alergias, Doenças e Medicamentos",
+                    onClick = { navController.navigate("dados_medicos/$emailUsuario") }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Ajuda
                 OpcaoPerfil(
                     icone = Icons.Default.Info,
                     titulo = "Ajuda",
@@ -156,7 +163,6 @@ fun TelaPerfil(navController: NavController, emailUsuario: String) {
     }
 }
 
-// Componente visual para cada linha do menu
 @Composable
 fun OpcaoPerfil(icone: ImageVector, titulo: String, subtitulo: String, onClick: () -> Unit) {
     Card(

@@ -33,19 +33,17 @@ fun TelaRotina(navController: NavController, emailUsuario: String) {
     var listaTarefas by remember { mutableStateOf<List<ItemRotinaDTO>>(emptyList()) }
     var carregando by remember { mutableStateOf(true) }
 
-    // --- LÓGICA DE RECARREGAMENTO (A CORREÇÃO) ---
-    // Verifica se a tela anterior mandou um pedido de "refresh"
+    // aTUALIZAR
     val precisaAtualizar = navController.currentBackStackEntry
         ?.savedStateHandle
         ?.getLiveData<Boolean>("refresh")
         ?.observeAsState()
 
-    // Função que busca no servidor
+    // Funcao que busca no servidor
     fun carregarDados() {
         scope.launch {
             try {
                 carregando = true
-                // IMPORTANTE: Use RetrofitClient.api (conforme seu projeto)
                 val response = RetrofitClient.api.getHome(emailUsuario)
                 if (response.isSuccessful) {
                     val dados = response.body()
@@ -70,12 +68,11 @@ fun TelaRotina(navController: NavController, emailUsuario: String) {
     LaunchedEffect(precisaAtualizar?.value) {
         if (precisaAtualizar?.value == true) {
             carregarDados()
-            // Reseta o sinal para não ficar recarregando à toa
             navController.currentBackStackEntry?.savedStateHandle?.set("refresh", false)
         }
     }
 
-    // Funções de Ação (Checkbox e Deletar)
+    // Funcoes de Acao
     fun deletarItem(idItem: Int) {
         scope.launch {
             try {
@@ -104,7 +101,7 @@ fun TelaRotina(navController: NavController, emailUsuario: String) {
         }
     }
 
-    // --- SEU LAYOUT ORIGINAL ---
+    // LAYOUT
     Scaffold(
         topBar = {
             TopAppBar(
