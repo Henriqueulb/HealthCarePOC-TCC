@@ -57,6 +57,12 @@ data class StatusRotinaDTO(
     @SerializedName("data") val data: String
 )
 
+data class NovoSintomaDTO(
+    @SerializedName("emailUsuario") val emailUsuario: String,
+    @SerializedName("bemEstar") val bemEstar: Int,
+    @SerializedName("sintomas") val sintomas: Int
+)
+
 // --- INTERFACE ---
 
 interface ApiService {
@@ -77,6 +83,9 @@ interface ApiService {
 
     @DELETE("rotina/{id}")
     suspend fun deletarRotina(@Path("id") id: Int): Response<RespostaApi>
+
+    @POST("sintomas")
+    suspend fun registrarSintoma(@Body request: NovoSintomaDTO): Response<RespostaApi>
 }
 
 // --- CLIENTE RETROFIT ---
