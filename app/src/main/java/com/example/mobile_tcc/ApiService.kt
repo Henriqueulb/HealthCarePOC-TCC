@@ -4,12 +4,9 @@ import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import retrofit2.http.*
 
-// DTOs
+// --- DTOs (Modelos de Dados) ---
 
 data class LoginRequest(
     @SerializedName("email") val email: String,
@@ -29,9 +26,9 @@ data class RespostaApi(
     @SerializedName("nomeUsuario") val nomeUsuario: String? = null
 )
 
-// DTOs PARA ROTINA
+// DTOs Rotina
 
-data class NovaRotinaRequest(
+data class NovaRotinaDTO(
     @SerializedName("emailUsuario") val emailUsuario: String,
     @SerializedName("titulo") val titulo: String,
     @SerializedName("horario") val horario: String,
@@ -39,20 +36,28 @@ data class NovaRotinaRequest(
     @SerializedName("descricao") val descricao: String?
 )
 
-data class Tarefa(
+data class ItemRotinaDTO(
     @SerializedName("id") val id: Int,
     @SerializedName("titulo") val titulo: String,
     @SerializedName("horario") val horario: String,
     @SerializedName("dose") val dose: String?,
-    @SerializedName("feita") val feita: Boolean
+    @SerializedName("feita") var feita: Boolean
 )
 
-data class ResumoHome(
+// --- AQUI ESTAVA FALTANDO O CAMPO ---
+data class HomeResumoDTO(
     @SerializedName("progresso") val progresso: Float,
-    @SerializedName("tarefas") val tarefas: List<Tarefa>
+    @SerializedName("tarefas") val tarefas: List<ItemRotinaDTO>,
+    @SerializedName("nomeUsuario") val nomeUsuario: String // <--- ADICIONE ESTE CAMPO
 )
 
-// INTERFACE
+data class StatusRotinaDTO(
+    @SerializedName("idItem") val idItem: Int,
+    @SerializedName("feito") val feito: Boolean,
+    @SerializedName("data") val data: String
+)
+
+// --- INTERFACE ---
 
 interface ApiService {
     @POST("login")
@@ -61,17 +66,22 @@ interface ApiService {
     @POST("cadastro")
     suspend fun cadastro(@Body request: CadastroRequest): Response<RespostaApi>
 
-    // Rota para criar nova rotina
     @POST("rotina")
-    suspend fun criarRotina(@Body request: NovaRotinaRequest): Response<RespostaApi>
+    suspend fun criarRotina(@Body request: NovaRotinaDTO): Response<RespostaApi>
 
-    // Rota para buscar os dados da Home (lista de tarefas)
     @GET("home")
-    suspend fun getHome(@Query("email") email: String): Response<ResumoHome>
+    suspend fun getHome(@Query("email") email: String): Response<HomeResumoDTO>
+
+    @POST("rotina/status")
+    suspend fun atualizarStatus(@Body status: StatusRotinaDTO): Response<RespostaApi>
+
+    @DELETE("rotina/{id}")
+    suspend fun deletarRotina(@Path("id") id: Int): Response<RespostaApi>
 }
 
+// --- CLIENTE RETROFIT ---
+
 object RetrofitClient {
-    // Endereço do PC visto pelo emulador Android
     private const val BASE_URL = "http://10.0.2.2:8080/"
 
     val api: ApiService by lazy {

@@ -1,43 +1,34 @@
 package com.example.mobile_tcc
 
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
+object Mascaras {
 
-class MascaraTelefone : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        val trimmed = text.text.take(11)
-        var out = ""
+    fun formatarTelefone(texto: String): String {
+        val numeros = texto.filter { it.isDigit() }
+        val limitado = if (numeros.length > 11) numeros.substring(0, 11) else numeros
 
-        for (i in trimmed.indices) {
-            out += when (i) {
-                0 -> "("
-                2 -> ") "
-                7 -> "-"
-                else -> ""
+        return when {
+            limitado.length > 10 -> {
+                "(${limitado.substring(0, 2)}) ${limitado.substring(2, 7)}-${limitado.substring(7)}"
             }
-            out += trimmed[i]
+            limitado.length > 6 -> {
+                "(${limitado.substring(0, 2)}) ${limitado.substring(2, 6)}-${limitado.substring(6)}"
+            }
+            limitado.length > 2 -> {
+                "(${limitado.substring(0, 2)}) ${limitado.substring(2)}"
+            }
+            else -> limitado
         }
+    }
 
-        val numberOffsetTranslator = object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                if (offset <= 0) return offset
-                if (offset <= 2) return offset + 1
-                if (offset <= 7) return offset + 3
-                if (offset <= 11) return offset + 4
-                return 15
-            }
+    fun formatarHora(texto: String): String {
+        val numeros = texto.filter { it.isDigit() }
+        val limitado = if (numeros.length > 4) numeros.substring(0, 4) else numeros
 
-            override fun transformedToOriginal(offset: Int): Int {
-                if (offset <= 0) return offset
-                if (offset <= 2) return offset - 1
-                if (offset <= 7) return offset - 3
-                if (offset <= 11) return offset - 4
-                return 11
+        return when {
+            limitado.length >= 3 -> {
+                "${limitado.substring(0, 2)}:${limitado.substring(2)}"
             }
+            else -> limitado
         }
-
-        return TransformedText(AnnotatedString(out), numberOffsetTranslator)
     }
 }

@@ -3,14 +3,12 @@ package com.example.mobile_tcc
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,37 +17,37 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TelaCadastro(navController: NavController) {
+fun TelaLogin(navController: NavController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var nome by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
-    var telefone by remember { mutableStateOf("") }
     var carregando by remember { mutableStateOf(false) }
 
-    fun realizarCadastro() {
-        if (nome.isBlank() || email.isBlank() || senha.isBlank()) {
-            Toast.makeText(context, "Preencha os campos obrigatórios", Toast.LENGTH_SHORT).show()
+    fun realizarLogin() {
+        if (email.isBlank() || senha.isBlank()) {
+            Toast.makeText(context, "Preencha todos os campos", Toast.LENGTH_SHORT).show()
             return
         }
 
         scope.launch {
             carregando = true
             try {
-                // CORREÇÃO AQUI: Usando o nome correto 'CadastroRequest'
-                val request = CadastroRequest(nome, email, senha, telefone)
-                val response = RetrofitClient.api.cadastro(request)
+                // CORREÇÃO AQUI: Usando o nome correto 'LoginRequest'
+                val request = LoginRequest(email, senha)
+                val response = RetrofitClient.api.login(request)
 
                 if (response.isSuccessful) {
-                    Toast.makeText(context, "Conta criada! Faça login.", Toast.LENGTH_LONG).show()
-                    navController.popBackStack()
+                    val emailLimpo = email.trim() // Garante que o email vá limpo para a rota
+                    navController.navigate("home/$emailLimpo") {
+                        popUpTo("login") { inclusive = true }
+                    }
                 } else {
-                    Toast.makeText(context, "Erro: ${response.body()?.mensagem ?: "Falha ao cadastrar"}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Login falhou. Verifique seus dados.", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Erro de conexão", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Erro de conexão: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
                 carregando = false
             }
@@ -60,41 +58,21 @@ fun TelaCadastro(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Criar Nova Conta", fontSize = 24.sp, color = Color(0xFF0D47A1))
+        Text("Bem-vindo de volta!", fontSize = 24.sp, color = Color(0xFF0D47A1))
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = nome,
-            onValueChange = { nome = it },
-            label = { Text("Nome Completo") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("E-mail") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = telefone,
-            onValueChange = { telefone = it }, // Se tiver Mascaras.formatarTelefone(it) use aqui
-            label = { Text("Telefone (Opcional)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = senha,
@@ -107,7 +85,7 @@ fun TelaCadastro(navController: NavController) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = { realizarCadastro() },
+            onClick = { realizarLogin() },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1)),
             enabled = !carregando
@@ -115,17 +93,17 @@ fun TelaCadastro(navController: NavController) {
             if (carregando) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text("CADASTRAR")
+                Text("ENTRAR", fontSize = 18.sp)
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Já tem uma conta? Entrar",
+            text = "Não tem conta? Cadastre-se",
             color = Color(0xFF0D47A1),
             modifier = Modifier.clickable {
-                navController.popBackStack()
+                navController.navigate("cadastro")
             }
         )
     }

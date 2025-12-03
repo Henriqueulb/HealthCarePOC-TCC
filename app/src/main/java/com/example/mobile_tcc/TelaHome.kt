@@ -1,322 +1,180 @@
 package com.example.mobile_tcc
 
-import androidx.compose.foundation.background
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
-// Cores do Projeto
-val AzulPrincipal = Color(0xFF2962FF)
-val FundoCinzaClaro = Color(0xFFF5F5F5)
-
-// TELA PRINCIPAL
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TelaHome(nomeUsuario: String, emailUsuario: String, onLogout: () -> Unit, onNavegarRotina: () -> Unit) {
+fun TelaHome(navController: NavController, emailUsuario: String) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    var resumo by remember { mutableStateOf<ResumoHome?>(null) }
+    var progresso by remember { mutableStateOf(0.0f) }
+    var tarefasPendentes by remember { mutableStateOf<List<ItemRotinaDTO>>(emptyList()) }
+    // Variável para guardar o nome real
+    var nomeExibicao by remember { mutableStateOf("Carregando...") }
     var carregando by remember { mutableStateOf(true) }
-    var erro by remember { mutableStateOf<String?>(null) }
 
-    // Busca dados
     LaunchedEffect(Unit) {
-        try {
-            val res = RetrofitClient.api.getHome(emailUsuario)
-            if (res.isSuccessful && res.body() != null) {
-                resumo = res.body()
-            } else {
-                erro = "Não foi possível carregar sua rotina."
+        scope.launch {
+            try {
+                val response = RetrofitClient.api.getHome(emailUsuario)
+                if (response.isSuccessful) {
+                    val dados = response.body()
+                    if (dados != null) {
+                        progresso = dados.progresso
+                        tarefasPendentes = dados.tarefas.filter { !it.feita }
+                        // Pega o nome vindo do banco
+                        nomeExibicao = dados.nomeUsuario
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Erro de conexão", Toast.LENGTH_SHORT).show()
+                nomeExibicao = "Usuário"
+            } finally {
+                carregando = false
             }
-        } catch (e: Exception) {
-            erro = "Erro de conexão: ${e.message}"
-        } finally {
-            carregando = false
         }
     }
 
     Scaffold(
-        containerColor = Color.White,
         bottomBar = {
-            BarraNavegacaoInferior(onClicarRotina = onNavegarRotina)
+            NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                    label = { Text("Home") },
+                    selected = true,
+                    onClick = { },
+                    colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF0D47A1))
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.List, contentDescription = "Rotina") },
+                    label = { Text("Rotina") },
+                    selected = false,
+                    onClick = { navController.navigate("rotina/$emailUsuario") },
+                    colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
+                    label = { Text("Perfil") },
+                    selected = false,
+                    onClick = { Toast.makeText(context, "Em breve", Toast.LENGTH_SHORT).show() },
+                    colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
+                )
+            }
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            contentPadding = PaddingValues(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            // --- CABEÇALHO COM NOME CORRETO ---
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = "Foto",
+                        modifier = Modifier.size(64.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Olá,", fontSize = 16.sp, color = Color.Gray)
+                        // Exibe o nome que veio do banco
+                        Text(text = nomeExibicao, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D47A1))
+                    }
+                }
+            }
 
-            // Cabecalho com Nome
-            CabecalhoUsuario(nome = nomeUsuario)
+            // --- RESTANTE DA TELA MANTIDO ---
+            item {
+                Text("Seu Progresso Hoje", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Aderência", fontWeight = FontWeight.SemiBold, color = Color(0xFF0D47A1))
+                            Text("${(progresso * 100).toInt()}%", fontWeight = FontWeight.Bold, color = Color(0xFF0D47A1))
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        LinearProgressIndicator(
+                            progress = progresso,
+                            modifier = Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)),
+                            color = Color(0xFF0D47A1),
+                            trackColor = Color.White
+                        )
+                    }
+                }
+            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            item {
+                Text("Próximos Cuidados", fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            }
 
             if (carregando) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AzulPrincipal)
-                }
-            } else if (erro != null) {
-                // Mensagem de erro
-                Text(text = erro!!, color = Color.Red, modifier = Modifier.align(Alignment.CenterHorizontally))
-            } else {
-                // Conteúdo Principal
-                resumo?.let { dados ->
-                    ConteudoPrincipal(dados)
-                }
-            }
-        }
-    }
-}
-
-// CABEÇALHO
-@Composable
-fun CabecalhoUsuario(nome: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = Color.LightGray
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
-                }
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column {
-                Text(
-                    text = "Olá,",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-                Text(
-                    text = nome,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Row {
-            BotaoIcone(Icons.Default.Notifications)
-            Spacer(modifier = Modifier.width(8.dp))
-            BotaoIcone(Icons.Default.Settings)
-        }
-    }
-}
-
-@Composable
-fun BotaoIcone(icone: ImageVector) {
-    IconButton(
-        onClick = { },
-        modifier = Modifier
-            .size(40.dp)
-            .background(Color(0xFFE3F2FD), CircleShape)
-    ) {
-        Icon(icone, contentDescription = null, tint = AzulPrincipal)
-    }
-}
-
-// BARRA INFERIOR
-@Composable
-fun BarraNavegacaoInferior(onClicarRotina: () -> Unit) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .height(64.dp),
-        shape = RoundedCornerShape(50),
-        color = AzulPrincipal,
-        shadowElevation = 8.dp
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconeNavegacao(Icons.Default.Home, true, onClick = {})
-            IconeNavegacao(Icons.Default.Email, false, onClick = {})
-            IconeNavegacao(Icons.Default.Person, false, onClick = {})
-            // icone de Calendario leva para a Tela Rotina
-            IconeNavegacao(Icons.Default.DateRange, false, onClick = onClicarRotina)
-        }
-    }
-}
-
-@Composable
-fun IconeNavegacao(icone: ImageVector, selecionado: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(
-            imageVector = icone,
-            contentDescription = null,
-            tint = if (selecionado) Color.White else Color.White.copy(alpha = 0.6f),
-            modifier = Modifier.size(28.dp)
-        )
-    }
-}
-
-// CONTEÚDO PRINCIPAL
-@Composable
-fun ConteudoPrincipal(dados: ResumoHome) {
-    LazyColumn {
-        // Progresso
-        item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Progresso Diário", fontWeight = FontWeight.SemiBold, color = AzulPrincipal)
-                        Text("${(dados.progresso * 100).toInt()}%", fontWeight = FontWeight.Bold, color = AzulPrincipal)
+                item { Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
+            } else if (tarefasPendentes.isEmpty()) {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(modifier = Modifier.padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("🎉", fontSize = 28.sp)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Tudo concluído por hoje!", color = Color(0xFF2E7D32), fontWeight = FontWeight.Medium)
+                        }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    LinearProgressIndicator(
-                        progress = { dados.progresso },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        color = AzulPrincipal,
-                        trackColor = Color.White
-                    )
+                }
+            } else {
+                items(tarefasPendentes) { item ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth().clickable { navController.navigate("rotina/$emailUsuario") }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(item.titulo, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE65100))
+                                Text("Horário: ${item.horario}", fontSize = 14.sp, color = Color.Black)
+                                if (!item.dose.isNullOrBlank()) Text("Dose: ${item.dose}", fontSize = 14.sp, color = Color.Gray)
+                            }
+                            Text(">", fontSize = 20.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Atalhos
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                CardAtalho("Ficha Médica", Icons.Default.Favorite, Color(0xFFFFEBEE), Color(0xFFD32F2F))
-                CardAtalho("Relatórios", Icons.Default.List, Color(0xFFE8F5E9), Color(0xFF388E3C))
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Lista de Tarefas
-        item {
-            Text("Próximos Cuidados", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        if (dados.tarefas.isEmpty()) {
-            item {
-                Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
-                    Text("Nenhuma tarefa para hoje. Adicione na aba Rotina!", color = Color.Gray)
-                }
-            }
-        } else {
-            items(dados.tarefas) { tarefa ->
-                ItemTarefaHome(tarefa)
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(100.dp))
-        }
-    }
-}
-
-@Composable
-fun ItemTarefaHome(tarefa: Tarefa) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = FundoCinzaClaro),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Checkbox visual
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(if (tarefa.feita) AzulPrincipal else Color.White)
-                    .padding(4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (tarefa.feita) {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column {
-                Text(
-                    text = tarefa.titulo,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (tarefa.feita) Color.Gray else Color.Black
-                )
-                // Exibe Horario e Dose
-                val detalhes = if (tarefa.dose.isNullOrBlank()) {
-                    tarefa.horario
-                } else {
-                    "${tarefa.horario} • ${tarefa.dose}"
-                }
-
-                Text(
-                    text = detalhes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun CardAtalho(titulo: String, icone: ImageVector, corFundo: Color, corIcone: Color) {
-    Card(
-        modifier = Modifier
-            .width(165.dp)
-            .height(90.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = corFundo)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(imageVector = icone, contentDescription = null, tint = corIcone, modifier = Modifier.size(28.dp))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(titulo, fontWeight = FontWeight.Medium, fontSize = 14.sp, color = corIcone)
+            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
