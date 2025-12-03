@@ -33,7 +33,6 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
 
     var progresso by remember { mutableStateOf(0.0f) }
     var tarefasPendentes by remember { mutableStateOf<List<ItemRotinaDTO>>(emptyList()) }
-    // Variável para guardar o nome real
     var nomeExibicao by remember { mutableStateOf("Carregando...") }
     var carregando by remember { mutableStateOf(true) }
 
@@ -46,7 +45,6 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
                     if (dados != null) {
                         progresso = dados.progresso
                         tarefasPendentes = dados.tarefas.filter { !it.feita }
-                        // Pega o nome vindo do banco
                         nomeExibicao = dados.nomeUsuario
                     }
                 }
@@ -66,7 +64,7 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
                     icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                     label = { Text("Home") },
                     selected = true,
-                    onClick = { },
+                    onClick = { /* Já estamos na Home */ },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF0D47A1))
                 )
                 NavigationBarItem(
@@ -77,17 +75,18 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
                     colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Face, "Sintomas") }, // Ícone de Rosto/Bem-Estar
+                    icon = { Icon(Icons.Default.Face, contentDescription = "Sintomas") },
                     label = { Text("Sintomas") },
                     selected = false,
                     onClick = { navController.navigate("sintomas/$emailUsuario") },
                     colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
                 )
+                // --- CORREÇÃO AQUI: DIRECIONAR PARA A TELA DE PERFIL ---
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
                     label = { Text("Perfil") },
                     selected = false,
-                    onClick = { Toast.makeText(context, "Em breve", Toast.LENGTH_SHORT).show() },
+                    onClick = { navController.navigate("perfil/$emailUsuario") }, // Agora vai para a tela correta
                     colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
                 )
             }
@@ -98,7 +97,7 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
             contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- CABEÇALHO COM NOME CORRETO ---
+            // Cabeçalho
             item {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -113,13 +112,12 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(text = "Olá,", fontSize = 16.sp, color = Color.Gray)
-                        // Exibe o nome que veio do banco
                         Text(text = nomeExibicao, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D47A1))
                     }
                 }
             }
 
-            // --- RESTANTE DA TELA MANTIDO ---
+            // Progresso
             item {
                 Text("Seu Progresso Hoje", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -144,6 +142,7 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
                 }
             }
 
+            // Lista Pendente
             item {
                 Text("Próximos Cuidados", fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
             }

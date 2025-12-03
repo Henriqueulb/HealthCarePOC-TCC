@@ -6,8 +6,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 
-// --- DTOs (Modelos de Dados) ---
-
+// DTOs Gerais
 data class LoginRequest(
     @SerializedName("email") val email: String,
     @SerializedName("senha") val senha: String
@@ -27,7 +26,6 @@ data class RespostaApi(
 )
 
 // DTOs Rotina
-
 data class NovaRotinaDTO(
     @SerializedName("emailUsuario") val emailUsuario: String,
     @SerializedName("titulo") val titulo: String,
@@ -44,11 +42,10 @@ data class ItemRotinaDTO(
     @SerializedName("feita") var feita: Boolean
 )
 
-// --- AQUI ESTAVA FALTANDO O CAMPO ---
 data class HomeResumoDTO(
     @SerializedName("progresso") val progresso: Float,
     @SerializedName("tarefas") val tarefas: List<ItemRotinaDTO>,
-    @SerializedName("nomeUsuario") val nomeUsuario: String // <--- ADICIONE ESTE CAMPO
+    @SerializedName("nomeUsuario") val nomeUsuario: String
 )
 
 data class StatusRotinaDTO(
@@ -63,8 +60,21 @@ data class NovoSintomaDTO(
     @SerializedName("sintomas") val sintomas: Int
 )
 
-// --- INTERFACE ---
+// DTOs Perfil
+data class PerfilUsuarioDTO(
+    @SerializedName("nome") val nome: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("telefone") val telefone: String
+)
 
+data class AtualizarPerfilDTO(
+    @SerializedName("emailBusca") val emailBusca: String,
+    @SerializedName("novoNome") val novoNome: String,
+    @SerializedName("novoTelefone") val novoTelefone: String
+    // Senha removida
+)
+
+// Interface
 interface ApiService {
     @POST("login")
     suspend fun login(@Body request: LoginRequest): Response<RespostaApi>
@@ -86,13 +96,16 @@ interface ApiService {
 
     @POST("sintomas")
     suspend fun registrarSintoma(@Body request: NovoSintomaDTO): Response<RespostaApi>
-}
 
-// --- CLIENTE RETROFIT ---
+    @GET("perfil")
+    suspend fun getPerfil(@Query("email") email: String): Response<PerfilUsuarioDTO>
+
+    @PUT("perfil")
+    suspend fun atualizarPerfil(@Body dados: AtualizarPerfilDTO): Response<RespostaApi>
+}
 
 object RetrofitClient {
     private const val BASE_URL = "http://10.0.2.2:8080/"
-
     val api: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)

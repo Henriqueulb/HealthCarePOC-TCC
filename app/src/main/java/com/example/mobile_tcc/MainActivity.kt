@@ -75,5 +75,21 @@ fun AppNavigation() {
             val email = backStackEntry.arguments?.getString("email") ?: ""
             TelaRegistroSintomas(navController, email)
         }
+
+        composable(
+            route = "perfil/{email}",
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            TelaPerfil(navController, email)
+        }
+
+        composable(
+            route = "editar_perfil/{email}",
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            TelaEditarPerfil(navController, email)
+        }
     }
 }
