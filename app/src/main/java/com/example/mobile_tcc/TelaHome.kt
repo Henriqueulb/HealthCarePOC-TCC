@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
@@ -73,6 +74,13 @@ fun TelaHome(navController: NavController, emailUsuario: String) {
                     label = { Text("Rotina") },
                     selected = false,
                     onClick = { navController.navigate("rotina/$emailUsuario") },
+                    colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Face, "Sintomas") }, // Ícone de Rosto/Bem-Estar
+                    label = { Text("Sintomas") },
+                    selected = false,
+                    onClick = { navController.navigate("sintomas/$emailUsuario") },
                     colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray)
                 )
                 NavigationBarItem(
