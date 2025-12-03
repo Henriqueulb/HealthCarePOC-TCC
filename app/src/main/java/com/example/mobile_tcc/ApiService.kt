@@ -85,6 +85,12 @@ data class FichaMedicaDTO(
     @SerializedName("comorbidades") val comorbidades: String
 )
 
+data class NotificacaoConfigDTO(
+    @SerializedName("emailUsuario") val emailUsuario: String,
+    @SerializedName("ativo") val ativo: Boolean,
+    @SerializedName("som") val som: Boolean
+)
+
 // Interface
 interface ApiService {
     @POST("login")
@@ -125,6 +131,12 @@ interface ApiService {
 
     @POST("ficha")
     suspend fun salvarFichaMedica(@Body dados: FichaMedicaDTO): Response<RespostaApi>
+
+    @GET("notificacao")
+    suspend fun getConfigNotificacao(@Query("email") email: String): Response<NotificacaoConfigDTO>
+
+    @POST("notificacao")
+    suspend fun salvarConfigNotificacao(@Body config: NotificacaoConfigDTO): Response<RespostaApi>
 }
 
 object RetrofitClient {

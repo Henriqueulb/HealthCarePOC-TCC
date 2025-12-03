@@ -19,9 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.runtime.livedata.observeAsState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import androidx.compose.runtime.livedata.observeAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,26 +29,37 @@ fun TelaRotina(navController: NavController, emailUsuario: String) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Lista de tarefas
     var listaTarefas by remember { mutableStateOf<List<ItemRotinaDTO>>(emptyList()) }
     var carregando by remember { mutableStateOf(true) }
 
-    // aTUALIZAR
+    // Verifica se a tela anterior mandou um pedido de "refresh"
     val precisaAtualizar = navController.currentBackStackEntry
         ?.savedStateHandle
         ?.getLiveData<Boolean>("refresh")
         ?.observeAsState()
 
-    // Funcao que busca no servidor
+    // Funcao que busca
     fun carregarDados() {
         scope.launch {
             try {
                 carregando = true
                 val response = RetrofitClient.api.getHome(emailUsuario)
+
                 if (response.isSuccessful) {
                     val dados = response.body()
                     if (dados != null) {
                         listaTarefas = dados.tarefas
+
+                        dados.tarefas.forEach { item ->
+                            if (!item.feita) {
+                                AgendadorNotificacoes.agendarAlarme(
+                                    context,
+                                    item.id,
+                                    item.horario,
+                                    item.titulo
+                                )
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -91,17 +102,17 @@ fun TelaRotina(navController: NavController, emailUsuario: String) {
         scope.launch {
             try {
                 listaTarefas = listaTarefas.map { if (it.id == item.id) it.copy(feita = novoStatus) else it }
+
                 val hoje = LocalDate.now().toString()
                 val dto = StatusRotinaDTO(item.id, novoStatus, hoje)
                 RetrofitClient.api.atualizarStatus(dto)
             } catch (e: Exception) {
-                // Se der erro, reverte visualmente
+                // Reverte em caso de erro
                 listaTarefas = listaTarefas.map { if (it.id == item.id) it.copy(feita = !novoStatus) else it }
             }
         }
     }
 
-    // LAYOUT
     Scaffold(
         topBar = {
             TopAppBar(
@@ -159,8 +170,16 @@ fun TelaRotina(navController: NavController, emailUsuario: String) {
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Column {
-                                        Text(item.titulo, fontWeight = FontWeight.Bold, color = if(item.feita) Color.Gray else Color.Black)
-                                        Text("${item.horario} - ${item.dose ?: ""}", fontSize = 14.sp, color = Color.Gray)
+                                        Text(
+                                            text = item.titulo,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if(item.feita) Color.Gray else Color.Black
+                                        )
+                                        Text(
+                                            text = "${item.horario} - ${item.dose ?: ""}",
+                                            fontSize = 14.sp,
+                                            color = Color.Gray
+                                        )
                                     }
                                 }
                                 IconButton(onClick = { deletarItem(item.id) }) {

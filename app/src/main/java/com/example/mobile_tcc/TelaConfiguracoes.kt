@@ -84,11 +84,11 @@ fun TelaConfiguracoes(navController: NavController, emailUsuario: String) {
 
             Divider()
 
-            // Notificações
+            // Notificacoes
             ItemConfiguracao(
                 icone = Icons.Default.Notifications,
                 titulo = "Notificações",
-                onClick = { Toast.makeText(context, "Em breve", Toast.LENGTH_SHORT).show() }
+                onClick = { navController.navigate("notificacoes/$emailUsuario") }
             )
 
             Divider()
@@ -109,7 +109,7 @@ fun TelaConfiguracoes(navController: NavController, emailUsuario: String) {
         }
     }
 
-    //  DIALOG DE CONFIRMAÇÃO
+    //  DIALOG DE CONFIRMACAO
     if (mostrarDialogExclusao) {
         AlertDialog(
             onDismissRequest = { mostrarDialogExclusao = false },
