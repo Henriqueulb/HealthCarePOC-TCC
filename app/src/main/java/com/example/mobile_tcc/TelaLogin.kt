@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TelaLogin(navController: NavController) {
     val context = LocalContext.current
@@ -60,7 +59,7 @@ fun TelaLogin(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Bem-vindo de volta!", fontSize = 24.sp, color = Color(0xFF0D47A1))
+        Text("Bem-vindo ao MedCare!", fontSize = 24.sp, color = Color(0xFF0D47A1))
 
         Spacer(modifier = Modifier.height(32.dp))
 
