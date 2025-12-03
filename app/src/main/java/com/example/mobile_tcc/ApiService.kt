@@ -74,6 +74,11 @@ data class AtualizarPerfilDTO(
     // Senha removida
 )
 
+data class TrocarSenhaDTO(
+    @SerializedName("email") val email: String,
+    @SerializedName("novaSenha") val novaSenha: String
+)
+
 // Interface
 interface ApiService {
     @POST("login")
@@ -102,6 +107,12 @@ interface ApiService {
 
     @PUT("perfil")
     suspend fun atualizarPerfil(@Body dados: AtualizarPerfilDTO): Response<RespostaApi>
+
+    @PUT("usuario/senha")
+    suspend fun trocarSenha(@Body dados: TrocarSenhaDTO): Response<RespostaApi>
+
+    @DELETE("usuario")
+    suspend fun deletarConta(@Query("email") email: String): Response<RespostaApi>
 }
 
 object RetrofitClient {

@@ -124,8 +124,8 @@ fun TelaPerfil(navController: NavController, emailUsuario: String) {
                 OpcaoPerfil(
                     icone = Icons.Default.Settings,
                     titulo = "Configurações",
-                    subtitulo = "Notificações, tema, idioma",
-                    onClick = { Toast.makeText(context, "Configurações em breve", Toast.LENGTH_SHORT).show() }
+                    subtitulo = "Segurança, Notificações",
+                    onClick = { navController.navigate("configuracoes/$emailUsuario") } // <--- ROTA ATUALIZADA
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
